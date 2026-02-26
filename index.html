@@ -59,14 +59,16 @@
   }
   .logo-text { font-size: 18px; font-weight: 700; letter-spacing: -0.5px; }
   .logo-text span { color: var(--text-muted); font-weight: 400; font-size: 12px; margin-left: 6px; }
-  .locate-btn {
+
+  .header-btns { display: flex; gap: 6px; }
+  .icon-btn {
     width: 34px; height: 34px; border-radius: 8px;
     border: 1px solid var(--border); background: var(--bg-panel);
     color: var(--text-secondary); cursor: pointer;
     display: flex; align-items: center; justify-content: center; transition: all 0.2s;
   }
-  .locate-btn:hover { background: var(--bg-panel-hover); color: var(--text-primary); }
-  .locate-btn.active { color: var(--accent); border-color: var(--accent); box-shadow: 0 0 12px var(--accent-glow); }
+  .icon-btn:hover { background: var(--bg-panel-hover); color: var(--text-primary); }
+  .icon-btn.active { color: var(--accent); border-color: var(--accent); box-shadow: 0 0 12px var(--accent-glow); }
 
   .panel {
     position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 1000;
@@ -75,7 +77,10 @@
     padding: 12px; min-width: 340px; max-width: calc(100vw - 32px);
     box-shadow: 0 8px 32px rgba(0,0,0,0.5);
     max-height: calc(100dvh - 80px); overflow-y: auto;
+    transition: opacity 0.3s, transform 0.3s;
   }
+  .panel.hidden { opacity: 0; pointer-events: none; transform: translateX(-50%) translateY(20px); }
+
   .panel-section { margin-bottom: 8px; }
   .panel-section:last-child { margin-bottom: 0; }
   .panel-label {
@@ -130,13 +135,85 @@
   }
   .coming-soon-badge .cs-dot { width: 6px; height: 6px; border-radius: 50%; opacity: 0.4; }
 
-  /* Scrollbar for panel */
-  .panel::-webkit-scrollbar { width: 4px; }
-  .panel::-webkit-scrollbar-track { background: transparent; }
-  .panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  /* Score panel */
+  .score-panel {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 1001;
+    background: rgba(18,18,26,0.95); backdrop-filter: blur(16px);
+    border: 1px solid var(--border); border-radius: 16px;
+    padding: 16px; width: 360px; max-width: calc(100vw - 32px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+    transition: opacity 0.3s, transform 0.3s;
+    max-height: calc(100dvh - 80px); overflow-y: auto;
+  }
+  .score-panel.hidden { opacity: 0; pointer-events: none; transform: translateX(-50%) translateY(20px); }
+
+  .score-title {
+    font-size: 14px; font-weight: 700; margin-bottom: 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .score-title svg { color: var(--accent); }
+  .score-hint {
+    font-size: 12px; color: var(--text-secondary); text-align: center;
+    padding: 20px 0; line-height: 1.6;
+  }
+  .score-hint .emoji { font-size: 24px; display: block; margin-bottom: 6px; }
+  .score-location {
+    font-size: 11px; color: var(--text-secondary); margin-bottom: 10px;
+    padding: 8px 10px; background: rgba(255,255,255,0.04); border-radius: 8px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .score-location .coord { color: var(--text-primary); font-variant-numeric: tabular-nums; font-weight: 500; }
+
+  .radius-row { display: flex; gap: 6px; margin-bottom: 12px; }
+  .radius-btn {
+    flex: 1; padding: 8px 0; border-radius: 8px;
+    border: 1.5px solid var(--border); background: transparent;
+    color: var(--text-secondary); font-family: inherit;
+    font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+  }
+  .radius-btn:hover { background: var(--bg-panel-hover); color: var(--text-primary); }
+  .radius-btn.active { color: var(--accent); border-color: var(--accent); background: rgba(99,102,241,0.1); }
+
+  .calc-btn {
+    width: 100%; padding: 11px; border-radius: 10px; border: none;
+    background: linear-gradient(135deg, #6366f1, #818cf8);
+    color: #fff; font-family: inherit; font-size: 13px; font-weight: 700;
+    cursor: pointer; transition: all 0.2s; letter-spacing: 0.3px;
+  }
+  .calc-btn:hover { box-shadow: 0 4px 16px var(--accent-glow); transform: translateY(-1px); }
+  .calc-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  .score-results { margin-top: 14px; }
+  .score-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .score-row:last-child { border-bottom: none; }
+  .score-rank {
+    width: 20px; height: 20px; border-radius: 50%; font-size: 10px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .score-rank.gold { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #000; }
+  .score-rank.silver { background: linear-gradient(135deg, #94a3b8, #64748b); color: #fff; }
+  .score-rank.bronze { background: linear-gradient(135deg, #c2853b, #a3703b); color: #fff; }
+  .score-rank.other { background: var(--border); color: var(--text-muted); }
+  .score-telco { font-size: 12px; font-weight: 600; min-width: 72px; }
+  .score-bar-wrap { flex: 1; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+  .score-bar { height: 100%; border-radius: 4px; transition: width 0.8s ease-out; width: 0; }
+  .score-pct { font-size: 12px; font-weight: 700; min-width: 38px; text-align: right; font-variant-numeric: tabular-nums; }
+  .score-note {
+    font-size: 10px; color: var(--text-muted); margin-top: 10px; text-align: center; line-height: 1.5;
+  }
+
+  .score-mode-cursor { cursor: crosshair !important; }
+  .score-mode-cursor .leaflet-interactive { cursor: crosshair !important; }
+
+  .panel::-webkit-scrollbar, .score-panel::-webkit-scrollbar { width: 4px; }
+  .panel::-webkit-scrollbar-track, .score-panel::-webkit-scrollbar-track { background: transparent; }
+  .panel::-webkit-scrollbar-thumb, .score-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
   @media (max-width: 480px) {
-    .panel { bottom: 12px; border-radius: 14px; min-width: auto; width: calc(100vw - 24px); padding: 10px; }
+    .panel, .score-panel { bottom: 12px; border-radius: 14px; min-width: auto; width: calc(100vw - 24px); padding: 10px; }
     .layer-btn { padding: 8px 5px; font-size: 10px; }
     .layer-btn .dot { margin-right: 3px; width: 6px; height: 6px; }
     .logo-text span { display: none; }
@@ -150,8 +227,13 @@
     <div class="logo-icon">all</div>
     <div class="logo-text">allg<span>MY Telco Coverage</span></div>
   </div>
-  <div class="header-right">
-    <button class="locate-btn" id="locateBtn" title="My Location">
+  <div class="header-btns">
+    <button class="icon-btn" id="scoreToggle" title="Coverage Score">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/>
+      </svg>
+    </button>
+    <button class="icon-btn" id="locateBtn" title="My Location">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="6"/>
         <line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/>
@@ -163,47 +245,32 @@
 
 <div id="map"></div>
 
-<div class="panel">
-  <!-- Maxis -->
+<!-- Layer Panel -->
+<div class="panel" id="layerPanel">
   <div class="panel-section">
-    <div class="panel-label">
-      <svg width="14" height="14" viewBox="0 0 14 14"><rect width="14" height="14" rx="3" fill="#00b0f0"/></svg>
-      Maxis
-    </div>
+    <div class="panel-label"><svg width="14" height="14" viewBox="0 0 14 14"><rect width="14" height="14" rx="3" fill="#00b0f0"/></svg>Maxis</div>
     <div class="layer-toggles">
       <button class="layer-btn" style="--layer-color: var(--maxis-green)" data-telco="maxis" data-gen="2g"><span class="dot"></span>2G</button>
       <button class="layer-btn active" style="--layer-color: var(--maxis-blue)" data-telco="maxis" data-gen="4g"><span class="dot"></span>4G</button>
       <button class="layer-btn" style="--layer-color: var(--maxis-pink)" data-telco="maxis" data-gen="5g"><span class="dot"></span>5G</button>
     </div>
   </div>
-
-  <!-- CelcomDigi -->
   <div class="panel-section">
-    <div class="panel-label">
-      <svg width="14" height="14" viewBox="0 0 14 14"><rect width="14" height="14" rx="3" fill="#ed1c24"/></svg>
-      CelcomDigi
-    </div>
+    <div class="panel-label"><svg width="14" height="14" viewBox="0 0 14 14"><rect width="14" height="14" rx="3" fill="#ed1c24"/></svg>CelcomDigi</div>
     <div class="layer-toggles">
       <button class="layer-btn" style="--layer-color: var(--celcom-blue)" data-telco="celcomdigi" data-gen="celcom_4g"><span class="dot"></span>Celcom 4G</button>
       <button class="layer-btn" style="--layer-color: var(--celcom-blue)" data-telco="celcomdigi" data-gen="digi_4g"><span class="dot"></span>Digi 4G</button>
       <button class="layer-btn" style="--layer-color: var(--digi-yellow)" data-telco="celcomdigi" data-gen="5g"><span class="dot"></span>5G</button>
     </div>
   </div>
-
-  <!-- U Mobile -->
   <div class="panel-section">
-    <div class="panel-label">
-      <svg width="14" height="14" viewBox="0 0 14 14"><rect width="14" height="14" rx="3" fill="#ff6b00"/></svg>
-      U Mobile
-    </div>
+    <div class="panel-label"><svg width="14" height="14" viewBox="0 0 14 14"><rect width="14" height="14" rx="3" fill="#ff6b00"/></svg>U Mobile</div>
     <div class="layer-toggles">
       <button class="layer-btn" style="--layer-color: var(--um-purple)" data-telco="umobile" data-gen="4g"><span class="dot"></span>4G</button>
       <button class="layer-btn" style="--layer-color: var(--um-pink)" data-telco="umobile" data-gen="5g"><span class="dot"></span>5G</button>
       <button class="layer-btn" style="--layer-color: var(--um-orange)" data-telco="umobile" data-gen="ultra5g"><span class="dot"></span>ULTRA5G</button>
     </div>
   </div>
-
-  <!-- Coming Soon -->
   <div class="panel-section">
     <div class="panel-label">Coming Soon</div>
     <div class="coming-soon">
@@ -211,8 +278,6 @@
       <div class="coming-soon-badge"><span class="cs-dot" style="background: #8dc63f"></span>Yes</div>
     </div>
   </div>
-
-  <!-- Opacity -->
   <div class="panel-section">
     <div class="opacity-row">
       <span class="opacity-label">Opacity</span>
@@ -222,11 +287,40 @@
   </div>
 </div>
 
+<!-- Score Panel -->
+<div class="score-panel hidden" id="scorePanel">
+  <div class="score-title">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
+    Coverage Score
+  </div>
+  <div id="scoreHint">
+    <div class="score-hint">
+      <span class="emoji">📍</span>
+      Tap the map to select a location<br>
+      <span style="font-size:11px;color:var(--text-muted)">or use the GPS button above</span>
+    </div>
+  </div>
+  <div id="scoreConfig" style="display:none">
+    <div class="score-location">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      <span class="coord" id="scoreLat">—</span>, <span class="coord" id="scoreLng">—</span>
+    </div>
+    <div class="panel-label" style="margin-bottom:6px">Radius</div>
+    <div class="radius-row">
+      <button class="radius-btn" data-km="10">10 km</button>
+      <button class="radius-btn active" data-km="25">25 km</button>
+      <button class="radius-btn" data-km="50">50 km</button>
+    </div>
+    <button class="calc-btn" id="calcBtn">Calculate Coverage</button>
+    <div class="score-results" id="scoreResults" style="display:none"></div>
+    <div class="score-note" id="scoreNote" style="display:none"></div>
+  </div>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
 // ============================================
-// allg v1.4 — Malaysia Telco Coverage Map
-// Maxis: tile | CelcomDigi + U Mobile: image overlay
+// allg v1.5 — Coverage Map + Scoring
 // ============================================
 
 const MAXIS_BASE = 'https://maxisnetwork.tuxgeo.com/gwc/service/gmaps';
@@ -249,6 +343,14 @@ const TELCO_LAYERS = {
   }
 };
 
+// Which layers to score (4G comparison)
+const SCORE_LAYERS = [
+  { telco: 'maxis',      gen: '4g',        label: 'Maxis',    color: '#0060ff' },
+  { telco: 'celcomdigi', gen: 'celcom_4g', label: 'Celcom',   color: '#2196f3' },
+  { telco: 'celcomdigi', gen: 'digi_4g',   label: 'Digi',     color: '#4caf50' },
+  { telco: 'umobile',    gen: '4g',        label: 'U Mobile', color: '#7B61B5' },
+];
+
 // --- Map ---
 const map = L.map('map', { center: [4.2105, 101.9758], zoom: 7 });
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
@@ -263,7 +365,6 @@ let currentOpacity = 0.7;
 
 function layerKey(t, g) { return `${t}-${g}`; }
 
-// --- Toggle ---
 async function toggleLayer(telco, gen, btn) {
   const key = layerKey(telco, gen);
   const config = TELCO_LAYERS[telco]?.[gen];
@@ -275,7 +376,6 @@ async function toggleLayer(telco, gen, btn) {
     return false;
   }
 
-  // Tile (Maxis)
   if (config.type === 'tile') {
     const layer = L.tileLayer(config.url, { opacity: currentOpacity, maxZoom: 18, minZoom: 1 });
     layer.addTo(map);
@@ -283,13 +383,12 @@ async function toggleLayer(telco, gen, btn) {
     return true;
   }
 
-  // Image overlay (CelcomDigi + U Mobile)
   if (config.type === 'overlay') {
     if (btn) btn.classList.add('loading');
     try {
       if (!dataCache[config.url]) {
         const resp = await fetch(config.url);
-        if (!resp.ok) throw new Error(`HTTP ${resp.status} — file not found`);
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         dataCache[config.url] = await resp.json();
       }
       const group = L.layerGroup();
@@ -298,7 +397,6 @@ async function toggleLayer(telco, gen, btn) {
       });
       group.addTo(map);
       activeLayers[key] = group;
-      console.log(`Loaded ${config.label}: ${dataCache[config.url].overlays.length} overlays`);
       return true;
     } catch (err) {
       console.error(`Failed to load ${config.label}:`, err);
@@ -311,7 +409,6 @@ async function toggleLayer(telco, gen, btn) {
   return false;
 }
 
-// --- Buttons ---
 document.querySelectorAll('.layer-btn').forEach(btn => {
   btn.addEventListener('click', async () => {
     if (btn.classList.contains('loading')) return;
@@ -327,11 +424,8 @@ opacitySlider.addEventListener('input', (e) => {
   currentOpacity = parseInt(e.target.value) / 100;
   opacityVal.textContent = `${e.target.value}%`;
   Object.values(activeLayers).forEach(layer => {
-    if (layer.setOpacity) {
-      layer.setOpacity(currentOpacity);
-    } else if (layer.eachLayer) {
-      layer.eachLayer(l => { if (l.setOpacity) l.setOpacity(currentOpacity); });
-    }
+    if (layer.setOpacity) layer.setOpacity(currentOpacity);
+    else if (layer.eachLayer) layer.eachLayer(l => { if (l.setOpacity) l.setOpacity(currentOpacity); });
   });
 });
 
@@ -343,16 +437,262 @@ locateBtn.addEventListener('click', () => {
   locateBtn.classList.add('active');
   navigator.geolocation.getCurrentPosition(
     (pos) => {
-      map.setView([pos.coords.latitude, pos.coords.longitude], 13);
+      const lat = pos.coords.latitude, lng = pos.coords.longitude;
+      map.setView([lat, lng], 13);
       if (locationMarker) map.removeLayer(locationMarker);
-      locationMarker = L.circleMarker([pos.coords.latitude, pos.coords.longitude], {
+      locationMarker = L.circleMarker([lat, lng], {
         radius: 8, fillColor: '#6366f1', fillOpacity: 1, color: '#fff', weight: 2
       }).addTo(map).bindPopup('You are here').openPopup();
       setTimeout(() => locateBtn.classList.remove('active'), 1500);
+      if (scoreMode) setScorePin(lat, lng);
     },
     (err) => { locateBtn.classList.remove('active'); alert('Location error: ' + err.message); },
     { enableHighAccuracy: true, timeout: 10000 }
   );
+});
+
+// ============================================
+// SCORING MODE
+// ============================================
+let scoreMode = false;
+let scorePin = null;
+let scoreCircle = null;
+let scoreRadius = 25;
+let scoreLat = null, scoreLng = null;
+
+const scoreToggle = document.getElementById('scoreToggle');
+const layerPanel = document.getElementById('layerPanel');
+const scorePanel = document.getElementById('scorePanel');
+const scoreHint = document.getElementById('scoreHint');
+const scoreConfig = document.getElementById('scoreConfig');
+const calcBtn = document.getElementById('calcBtn');
+const scoreResults = document.getElementById('scoreResults');
+const scoreNote = document.getElementById('scoreNote');
+
+scoreToggle.addEventListener('click', () => {
+  scoreMode = !scoreMode;
+  scoreToggle.classList.toggle('active', scoreMode);
+  if (scoreMode) {
+    layerPanel.classList.add('hidden');
+    scorePanel.classList.remove('hidden');
+    map.getContainer().classList.add('score-mode-cursor');
+  } else {
+    layerPanel.classList.remove('hidden');
+    scorePanel.classList.add('hidden');
+    map.getContainer().classList.remove('score-mode-cursor');
+    clearScorePin();
+  }
+});
+
+map.on('click', (e) => {
+  if (!scoreMode) return;
+  setScorePin(e.latlng.lat, e.latlng.lng);
+});
+
+function setScorePin(lat, lng) {
+  scoreLat = lat; scoreLng = lng;
+  if (scorePin) map.removeLayer(scorePin);
+  scorePin = L.marker([lat, lng], {
+    icon: L.divIcon({
+      className: '',
+      html: '<div style="width:24px;height:24px;background:#6366f1;border:3px solid #fff;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,0.4);transform:translate(-12px,-12px)"></div>',
+      iconSize: [0, 0]
+    })
+  }).addTo(map);
+
+  document.getElementById('scoreLat').textContent = lat.toFixed(5);
+  document.getElementById('scoreLng').textContent = lng.toFixed(5);
+  scoreHint.style.display = 'none';
+  scoreConfig.style.display = 'block';
+  scoreResults.style.display = 'none';
+  scoreNote.style.display = 'none';
+  calcBtn.textContent = 'Calculate Coverage';
+  drawCircle();
+}
+
+function clearScorePin() {
+  if (scorePin) { map.removeLayer(scorePin); scorePin = null; }
+  if (scoreCircle) { map.removeLayer(scoreCircle); scoreCircle = null; }
+  scoreLat = null; scoreLng = null;
+  scoreHint.style.display = 'block';
+  scoreConfig.style.display = 'none';
+}
+
+function drawCircle() {
+  if (scoreCircle) map.removeLayer(scoreCircle);
+  if (!scoreLat) return;
+  scoreCircle = L.circle([scoreLat, scoreLng], {
+    radius: scoreRadius * 1000,
+    color: '#6366f1', fillColor: '#6366f1', fillOpacity: 0.08,
+    weight: 2, dashArray: '6,6'
+  }).addTo(map);
+}
+
+document.querySelectorAll('.radius-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.radius-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    scoreRadius = parseInt(btn.dataset.km);
+    drawCircle();
+  });
+});
+
+// ============================================
+// PIXEL SAMPLING ENGINE
+// ============================================
+const canvasCache = {};
+
+async function loadOverlayData(url) {
+  if (dataCache[url]) return dataCache[url];
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+  dataCache[url] = await resp.json();
+  return dataCache[url];
+}
+
+function imageToCanvas(src) {
+  return new Promise((resolve) => {
+    if (canvasCache[src]) { resolve(canvasCache[src]); return; }
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement('canvas');
+      c.width = img.width; c.height = img.height;
+      c.getContext('2d').drawImage(img, 0, 0);
+      canvasCache[src] = c;
+      resolve(c);
+    };
+    img.onerror = () => resolve(null);
+    img.src = src;
+  });
+}
+
+function pixelHasCoverage(canvas, bounds, lat, lng) {
+  const s = bounds[0][0], w = bounds[0][1], n = bounds[1][0], e = bounds[1][1];
+  if (lat < s || lat > n || lng < w || lng > e) return false;
+  const x = Math.floor((lng - w) / (e - w) * canvas.width);
+  const y = Math.floor((n - lat) / (n - s) * canvas.height);
+  if (x < 0 || x >= canvas.width || y < 0 || y >= canvas.height) return false;
+  return canvas.getContext('2d').getImageData(x, y, 1, 1).data[3] > 20;
+}
+
+function samplePoints(cLat, cLng, rKm, count) {
+  const pts = [], R = 6371;
+  for (let i = 0; i < count; i++) {
+    const r = rKm * Math.sqrt(Math.random());
+    const t = Math.random() * 2 * Math.PI;
+    pts.push([
+      cLat + (r * Math.cos(t)) / R * (180 / Math.PI),
+      cLng + (r * Math.sin(t)) / (R * Math.cos(cLat * Math.PI / 180)) * (180 / Math.PI)
+    ]);
+  }
+  return pts;
+}
+
+// Pre-build canvas for all overlays in a JSON
+async function prepareOverlayCanvases(url) {
+  const data = await loadOverlayData(url);
+  const prepared = [];
+  for (const o of data.overlays) {
+    const c = await imageToCanvas(o.image);
+    if (c) prepared.push({ canvas: c, bounds: o.bounds });
+  }
+  return prepared;
+}
+
+// Check single point against prepared canvases
+function checkPointCoverage(preparedOverlays, lat, lng) {
+  for (const { canvas, bounds } of preparedOverlays) {
+    if (pixelHasCoverage(canvas, bounds, lat, lng)) return true;
+  }
+  return false;
+}
+
+// --- Calculate ---
+calcBtn.addEventListener('click', async () => {
+  if (!scoreLat || !scoreLng) return;
+
+  calcBtn.disabled = true;
+  calcBtn.textContent = 'Loading data...';
+  scoreResults.style.display = 'none';
+  scoreNote.style.display = 'none';
+
+  const NUM = 200;
+  const points = samplePoints(scoreLat, scoreLng, scoreRadius, NUM);
+
+  // Prepare all overlay canvases
+  const prepared = {};
+  for (const sl of SCORE_LAYERS) {
+    const config = TELCO_LAYERS[sl.telco]?.[sl.gen];
+    if (config?.type === 'overlay') {
+      const key = config.url;
+      if (!prepared[key]) {
+        try {
+          prepared[key] = await prepareOverlayCanvases(config.url);
+        } catch { prepared[key] = []; }
+      }
+    }
+  }
+
+  calcBtn.textContent = 'Sampling...';
+
+  // Score each telco
+  const results = [];
+  let maxisNote = false;
+
+  // Use setTimeout to allow UI update
+  await new Promise(r => setTimeout(r, 50));
+
+  for (const sl of SCORE_LAYERS) {
+    const config = TELCO_LAYERS[sl.telco]?.[sl.gen];
+
+    if (config?.type === 'tile') {
+      results.push({ ...sl, score: -1 });
+      maxisNote = true;
+      continue;
+    }
+
+    const overlays = prepared[config.url] || [];
+    let covered = 0;
+    for (const [lat, lng] of points) {
+      if (checkPointCoverage(overlays, lat, lng)) covered++;
+    }
+    results.push({ ...sl, score: Math.round(covered / NUM * 100) });
+  }
+
+  // Sort
+  results.sort((a, b) => b.score - a.score);
+
+  // Render
+  let html = '', rank = 0;
+  for (const r of results) {
+    rank++;
+    const rc = r.score < 0 ? 'other' : rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : 'other';
+    html += `<div class="score-row">
+      <div class="score-rank ${rc}">${r.score < 0 ? '?' : rank}</div>
+      <div class="score-telco" style="color:${r.color}">${r.label}</div>
+      <div class="score-bar-wrap"><div class="score-bar" data-pct="${r.score < 0 ? 0 : r.score}" style="background:${r.color}"></div></div>
+      <div class="score-pct">${r.score < 0 ? '—' : r.score + '%'}</div>
+    </div>`;
+  }
+  scoreResults.innerHTML = html;
+  scoreResults.style.display = 'block';
+
+  // Animate bars
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      scoreResults.querySelectorAll('.score-bar').forEach(b => {
+        b.style.width = b.dataset.pct + '%';
+      });
+    });
+  });
+
+  let note = `${NUM} sample points · ${scoreRadius}km radius`;
+  if (maxisNote) note += '<br>⚠ Maxis needs API proxy (coming soon)';
+  scoreNote.innerHTML = note;
+  scoreNote.style.display = 'block';
+
+  calcBtn.disabled = false;
+  calcBtn.textContent = 'Recalculate';
 });
 
 // --- Init ---
