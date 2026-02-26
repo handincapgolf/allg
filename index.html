@@ -22,7 +22,9 @@
     --maxis-pink: #ed138b;
     --celcom-blue: #66A2EA;
     --digi-yellow: #FFE000;
-    --umobile: #ff6b00;
+    --um-orange: #ff6b00;
+    --um-pink: #E91E8C;
+    --um-purple: #7B61B5;
     --unifi: #e4002b;
   }
   body {
@@ -72,6 +74,7 @@
     border: 1px solid var(--border); border-radius: 16px;
     padding: 12px; min-width: 340px; max-width: calc(100vw - 32px);
     box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    max-height: calc(100dvh - 80px); overflow-y: auto;
   }
   .panel-section { margin-bottom: 8px; }
   .panel-section:last-child { margin-bottom: 0; }
@@ -82,10 +85,10 @@
   }
   .layer-toggles { display: flex; gap: 6px; }
   .layer-btn {
-    flex: 1; padding: 10px 12px; border-radius: 10px;
+    flex: 1; padding: 10px 8px; border-radius: 10px;
     border: 1.5px solid var(--border); background: transparent;
     color: var(--text-secondary); font-family: inherit;
-    font-size: 13px; font-weight: 600; cursor: pointer;
+    font-size: 12px; font-weight: 600; cursor: pointer;
     transition: all 0.25s ease; text-align: center; white-space: nowrap;
   }
   .layer-btn:hover { background: var(--bg-panel-hover); color: var(--text-primary); }
@@ -96,7 +99,7 @@
   }
   .layer-btn .dot {
     display: inline-block; width: 8px; height: 8px; border-radius: 50%;
-    background: var(--layer-color); margin-right: 6px; vertical-align: middle;
+    background: var(--layer-color); margin-right: 5px; vertical-align: middle;
     opacity: 0.5; transition: opacity 0.25s;
   }
   .layer-btn.active .dot { opacity: 1; box-shadow: 0 0 6px var(--layer-color); }
@@ -127,10 +130,15 @@
   }
   .coming-soon-badge .cs-dot { width: 6px; height: 6px; border-radius: 50%; opacity: 0.4; }
 
+  /* Scrollbar for panel */
+  .panel::-webkit-scrollbar { width: 4px; }
+  .panel::-webkit-scrollbar-track { background: transparent; }
+  .panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
   @media (max-width: 480px) {
     .panel { bottom: 12px; border-radius: 14px; min-width: auto; width: calc(100vw - 24px); padding: 10px; }
-    .layer-btn { padding: 8px 6px; font-size: 11px; }
-    .layer-btn .dot { margin-right: 4px; }
+    .layer-btn { padding: 8px 5px; font-size: 10px; }
+    .layer-btn .dot { margin-right: 3px; width: 6px; height: 6px; }
     .logo-text span { display: none; }
   }
 </style>
@@ -156,6 +164,7 @@
 <div id="map"></div>
 
 <div class="panel">
+  <!-- Maxis -->
   <div class="panel-section">
     <div class="panel-label">
       <svg width="14" height="14" viewBox="0 0 14 14"><rect width="14" height="14" rx="3" fill="#00b0f0"/></svg>
@@ -167,6 +176,8 @@
       <button class="layer-btn" style="--layer-color: var(--maxis-pink)" data-telco="maxis" data-gen="5g"><span class="dot"></span>5G</button>
     </div>
   </div>
+
+  <!-- CelcomDigi -->
   <div class="panel-section">
     <div class="panel-label">
       <svg width="14" height="14" viewBox="0 0 14 14"><rect width="14" height="14" rx="3" fill="#ed1c24"/></svg>
@@ -178,13 +189,30 @@
       <button class="layer-btn" style="--layer-color: var(--digi-yellow)" data-telco="celcomdigi" data-gen="5g"><span class="dot"></span>5G</button>
     </div>
   </div>
+
+  <!-- U Mobile -->
+  <div class="panel-section">
+    <div class="panel-label">
+      <svg width="14" height="14" viewBox="0 0 14 14"><rect width="14" height="14" rx="3" fill="#ff6b00"/></svg>
+      U Mobile
+    </div>
+    <div class="layer-toggles">
+      <button class="layer-btn" style="--layer-color: var(--um-purple)" data-telco="umobile" data-gen="4g"><span class="dot"></span>4G</button>
+      <button class="layer-btn" style="--layer-color: var(--um-pink)" data-telco="umobile" data-gen="5g"><span class="dot"></span>5G</button>
+      <button class="layer-btn" style="--layer-color: var(--um-orange)" data-telco="umobile" data-gen="ultra5g"><span class="dot"></span>ULTRA5G</button>
+    </div>
+  </div>
+
+  <!-- Coming Soon -->
   <div class="panel-section">
     <div class="panel-label">Coming Soon</div>
     <div class="coming-soon">
-      <div class="coming-soon-badge"><span class="cs-dot" style="background: var(--umobile)"></span>U Mobile</div>
       <div class="coming-soon-badge"><span class="cs-dot" style="background: var(--unifi)"></span>unifi</div>
+      <div class="coming-soon-badge"><span class="cs-dot" style="background: #8dc63f"></span>Yes</div>
     </div>
   </div>
+
+  <!-- Opacity -->
   <div class="panel-section">
     <div class="opacity-row">
       <span class="opacity-label">Opacity</span>
@@ -197,9 +225,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
 // ============================================
-// allg v1.3 — Malaysia Telco Coverage Map
-// Maxis: tile layers
-// CelcomDigi: image overlay layers (from KMZ)
+// allg v1.4 — Malaysia Telco Coverage Map
+// Maxis: tile | CelcomDigi + U Mobile: image overlay
 // ============================================
 
 const MAXIS_BASE = 'https://maxisnetwork.tuxgeo.com/gwc/service/gmaps';
@@ -214,6 +241,11 @@ const TELCO_LAYERS = {
     'celcom_4g': { type: 'overlay', url: 'data/celcom_4g.json', label: 'Celcom 4G', color: '#66A2EA' },
     'digi_4g':   { type: 'overlay', url: 'data/digi_4g.json',   label: 'Digi 4G',   color: '#66A2EA' },
     '5g':        { type: 'overlay', url: 'data/dnb_5g.json',    label: '5G (DNB)',   color: '#FFE000' }
+  },
+  umobile: {
+    '4g':      { type: 'overlay', url: 'data/umobile_4g.json',      label: 'U Mobile 4G',      color: '#7B61B5' },
+    '5g':      { type: 'overlay', url: 'data/umobile_5g.json',      label: 'U Mobile 5G',      color: '#E91E8C' },
+    'ultra5g': { type: 'overlay', url: 'data/umobile_ultra5g.json', label: 'U Mobile ULTRA5G', color: '#ff6b00' }
   }
 };
 
@@ -230,16 +262,6 @@ const dataCache = {};
 let currentOpacity = 0.7;
 
 function layerKey(t, g) { return `${t}-${g}`; }
-
-// --- Create image overlay layer group ---
-function createOverlayGroup(data, opacity) {
-  const group = L.layerGroup();
-  data.overlays.forEach(o => {
-    const imgOverlay = L.imageOverlay(o.image, o.bounds, { opacity: opacity });
-    group.addLayer(imgOverlay);
-  });
-  return group;
-}
 
 // --- Toggle ---
 async function toggleLayer(telco, gen, btn) {
@@ -261,16 +283,19 @@ async function toggleLayer(telco, gen, btn) {
     return true;
   }
 
-  // Image overlay (CelcomDigi)
+  // Image overlay (CelcomDigi + U Mobile)
   if (config.type === 'overlay') {
     if (btn) btn.classList.add('loading');
     try {
       if (!dataCache[config.url]) {
         const resp = await fetch(config.url);
-        if (!resp.ok) throw new Error(`HTTP ${resp.status} — file not found. Run the KMZ extractor first.`);
+        if (!resp.ok) throw new Error(`HTTP ${resp.status} — file not found`);
         dataCache[config.url] = await resp.json();
       }
-      const group = createOverlayGroup(dataCache[config.url], currentOpacity);
+      const group = L.layerGroup();
+      dataCache[config.url].overlays.forEach(o => {
+        group.addLayer(L.imageOverlay(o.image, o.bounds, { opacity: currentOpacity }));
+      });
       group.addTo(map);
       activeLayers[key] = group;
       console.log(`Loaded ${config.label}: ${dataCache[config.url].overlays.length} overlays`);
@@ -303,10 +328,8 @@ opacitySlider.addEventListener('input', (e) => {
   opacityVal.textContent = `${e.target.value}%`;
   Object.values(activeLayers).forEach(layer => {
     if (layer.setOpacity) {
-      // Tile layer
       layer.setOpacity(currentOpacity);
     } else if (layer.eachLayer) {
-      // Layer group (image overlays)
       layer.eachLayer(l => { if (l.setOpacity) l.setOpacity(currentOpacity); });
     }
   });
