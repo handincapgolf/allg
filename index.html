@@ -320,16 +320,22 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
 // ============================================
-// allg v1.5 — Coverage Map + Scoring
+// allg v1.6 — Coverage Map + Full Scoring
+// Maxis via Worker proxy | CelcomDigi + U Mobile via pixel sampling
 // ============================================
 
+// ▼▼▼ CHANGE THIS to your Cloudflare Worker URL ▼▼▼
+const WORKER_URL = 'https://allg-proxy.handincap-golf.workers.dev';
+// ▲▲▲ ▲▲▲ ▲▲▲ ▲▲▲ ▲▲▲ ▲▲▲ ▲▲▲ ▲▲▲ ▲▲▲ ▲▲▲ ▲▲▲
+
 const MAXIS_BASE = 'https://maxisnetwork.tuxgeo.com/gwc/service/gmaps';
+const TILE_ZOOM = 10; // zoom level for Maxis tile sampling
 
 const TELCO_LAYERS = {
   maxis: {
-    '2g': { type: 'tile', url: `${MAXIS_BASE}?SRS=EPSG:900913&layers=maxis:coverage_2g&zoom={z}&x={x}&y={y}&format=image/png8`, label: 'Maxis 2G', color: '#40c706' },
-    '4g': { type: 'tile', url: `${MAXIS_BASE}?SRS=EPSG:900913&layers=maxis:coverage_4g&zoom={z}&x={x}&y={y}&format=image/png8`, label: 'Maxis 4G', color: '#0060ff' },
-    '5g': { type: 'tile', url: `${MAXIS_BASE}?SRS=EPSG:900913&layers=maxis:coverage_5g&zoom={z}&x={x}&y={y}&format=image/png8`, label: 'Maxis 5G', color: '#ed138b' }
+    '2g': { type: 'tile', url: `${MAXIS_BASE}?SRS=EPSG:900913&layers=maxis:coverage_2g&zoom={z}&x={x}&y={y}&format=image/png8`, label: 'Maxis 2G', color: '#40c706', tileLayer: 'coverage_2g' },
+    '4g': { type: 'tile', url: `${MAXIS_BASE}?SRS=EPSG:900913&layers=maxis:coverage_4g&zoom={z}&x={x}&y={y}&format=image/png8`, label: 'Maxis 4G', color: '#0060ff', tileLayer: 'coverage_4g' },
+    '5g': { type: 'tile', url: `${MAXIS_BASE}?SRS=EPSG:900913&layers=maxis:coverage_5g&zoom={z}&x={x}&y={y}&format=image/png8`, label: 'Maxis 5G', color: '#ed138b', tileLayer: 'coverage_5g' }
   },
   celcomdigi: {
     'celcom_4g': { type: 'overlay', url: 'data/celcom_4g.json', label: 'Celcom 4G', color: '#66A2EA' },
@@ -554,25 +560,27 @@ function imageToCanvas(src) {
   return new Promise((resolve) => {
     if (canvasCache[src]) { resolve(canvasCache[src]); return; }
     const img = new Image();
+    img.crossOrigin = 'anonymous';
     img.onload = () => {
       const c = document.createElement('canvas');
       c.width = img.width; c.height = img.height;
-      c.getContext('2d').drawImage(img, 0, 0);
-      canvasCache[src] = c;
-      resolve(c);
+      const ctx = c.getContext('2d', { willReadFrequently: true });
+      ctx.drawImage(img, 0, 0);
+      canvasCache[src] = { canvas: c, ctx };
+      resolve(canvasCache[src]);
     };
     img.onerror = () => resolve(null);
     img.src = src;
   });
 }
 
-function pixelHasCoverage(canvas, bounds, lat, lng) {
+function pixelHasCoverage(canvasObj, bounds, lat, lng) {
   const s = bounds[0][0], w = bounds[0][1], n = bounds[1][0], e = bounds[1][1];
   if (lat < s || lat > n || lng < w || lng > e) return false;
-  const x = Math.floor((lng - w) / (e - w) * canvas.width);
-  const y = Math.floor((n - lat) / (n - s) * canvas.height);
-  if (x < 0 || x >= canvas.width || y < 0 || y >= canvas.height) return false;
-  return canvas.getContext('2d').getImageData(x, y, 1, 1).data[3] > 20;
+  const x = Math.floor((lng - w) / (e - w) * canvasObj.canvas.width);
+  const y = Math.floor((n - lat) / (n - s) * canvasObj.canvas.height);
+  if (x < 0 || x >= canvasObj.canvas.width || y < 0 || y >= canvasObj.canvas.height) return false;
+  return canvasObj.ctx.getImageData(x, y, 1, 1).data[3] > 20;
 }
 
 function samplePoints(cLat, cLng, rKm, count) {
@@ -588,23 +596,103 @@ function samplePoints(cLat, cLng, rKm, count) {
   return pts;
 }
 
-// Pre-build canvas for all overlays in a JSON
+// Prepare overlay canvases
 async function prepareOverlayCanvases(url) {
   const data = await loadOverlayData(url);
   const prepared = [];
   for (const o of data.overlays) {
-    const c = await imageToCanvas(o.image);
-    if (c) prepared.push({ canvas: c, bounds: o.bounds });
+    const co = await imageToCanvas(o.image);
+    if (co) prepared.push({ ...co, bounds: o.bounds });
   }
   return prepared;
 }
 
-// Check single point against prepared canvases
-function checkPointCoverage(preparedOverlays, lat, lng) {
-  for (const { canvas, bounds } of preparedOverlays) {
-    if (pixelHasCoverage(canvas, bounds, lat, lng)) return true;
+function checkPointOverlay(preparedOverlays, lat, lng) {
+  for (const p of preparedOverlays) {
+    if (pixelHasCoverage(p, p.bounds, lat, lng)) return true;
   }
   return false;
+}
+
+// ============================================
+// MAXIS TILE SAMPLING
+// ============================================
+
+// lat/lng → tile coords + pixel within tile
+function latLngToTilePixel(lat, lng, zoom) {
+  const n = Math.pow(2, zoom);
+  const xf = (lng + 180) / 360 * n;
+  const latRad = lat * Math.PI / 180;
+  const yf = (1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2 * n;
+  const tileX = Math.floor(xf);
+  const tileY = Math.floor(yf);
+  const px = Math.floor((xf - tileX) * 256);
+  const py = Math.floor((yf - tileY) * 256);
+  return { tileX, tileY, px, py };
+}
+
+// Fetch tile via Worker → canvas
+const tileCanvasCache = {};
+
+function fetchTileCanvas(tileLayer, z, x, y) {
+  const key = `${tileLayer}/${z}/${x}/${y}`;
+  if (tileCanvasCache[key]) return tileCanvasCache[key];
+
+  const promise = new Promise((resolve) => {
+    const url = `${WORKER_URL}/maxis/${tileLayer}/${z}/${x}/${y}`;
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const c = document.createElement('canvas');
+      c.width = 256; c.height = 256;
+      const ctx = c.getContext('2d', { willReadFrequently: true });
+      ctx.drawImage(img, 0, 0);
+      resolve({ canvas: c, ctx });
+    };
+    img.onerror = () => resolve(null);
+    img.src = url;
+  });
+
+  tileCanvasCache[key] = promise;
+  return promise;
+}
+
+// Score Maxis for all sample points
+async function scoreMaxis(tileLayerName, points) {
+  // Group points by tile
+  const tileGroups = {};
+  for (let i = 0; i < points.length; i++) {
+    const [lat, lng] = points[i];
+    const t = latLngToTilePixel(lat, lng, TILE_ZOOM);
+    const tileKey = `${t.tileX}_${t.tileY}`;
+    if (!tileGroups[tileKey]) {
+      tileGroups[tileKey] = { tileX: t.tileX, tileY: t.tileY, pixels: [] };
+    }
+    tileGroups[tileKey].pixels.push({ px: t.px, py: t.py });
+  }
+
+  // Fetch all unique tiles in parallel
+  const tileKeys = Object.keys(tileGroups);
+  const tilePromises = tileKeys.map(k => {
+    const g = tileGroups[k];
+    return fetchTileCanvas(tileLayerName, TILE_ZOOM, g.tileX, g.tileY);
+  });
+  const tileResults = await Promise.all(tilePromises);
+
+  // Check pixels
+  let covered = 0;
+  for (let i = 0; i < tileKeys.length; i++) {
+    const co = tileResults[i];
+    if (!co) continue;
+    for (const { px, py } of tileGroups[tileKeys[i]].pixels) {
+      if (px >= 0 && px < 256 && py >= 0 && py < 256) {
+        const alpha = co.ctx.getImageData(px, py, 1, 1).data[3];
+        if (alpha > 20) covered++;
+      }
+    }
+  }
+
+  return covered;
 }
 
 // --- Calculate ---
@@ -619,42 +707,45 @@ calcBtn.addEventListener('click', async () => {
   const NUM = 200;
   const points = samplePoints(scoreLat, scoreLng, scoreRadius, NUM);
 
-  // Prepare all overlay canvases
+  // Prepare overlay canvases
   const prepared = {};
   for (const sl of SCORE_LAYERS) {
     const config = TELCO_LAYERS[sl.telco]?.[sl.gen];
     if (config?.type === 'overlay') {
-      const key = config.url;
-      if (!prepared[key]) {
-        try {
-          prepared[key] = await prepareOverlayCanvases(config.url);
-        } catch { prepared[key] = []; }
+      if (!prepared[config.url]) {
+        try { prepared[config.url] = await prepareOverlayCanvases(config.url); }
+        catch { prepared[config.url] = []; }
       }
     }
   }
 
   calcBtn.textContent = 'Sampling...';
-
-  // Score each telco
-  const results = [];
-  let maxisNote = false;
-
-  // Use setTimeout to allow UI update
   await new Promise(r => setTimeout(r, 50));
+
+  const results = [];
+  let maxisFailed = false;
 
   for (const sl of SCORE_LAYERS) {
     const config = TELCO_LAYERS[sl.telco]?.[sl.gen];
 
+    // Maxis — tile sampling via Worker
     if (config?.type === 'tile') {
-      results.push({ ...sl, score: -1 });
-      maxisNote = true;
+      try {
+        const covered = await scoreMaxis(config.tileLayer, points);
+        results.push({ ...sl, score: Math.round(covered / NUM * 100) });
+      } catch (err) {
+        console.error('Maxis scoring failed:', err);
+        results.push({ ...sl, score: -1 });
+        maxisFailed = true;
+      }
       continue;
     }
 
+    // Overlay — pixel sampling
     const overlays = prepared[config.url] || [];
     let covered = 0;
     for (const [lat, lng] of points) {
-      if (checkPointCoverage(overlays, lat, lng)) covered++;
+      if (checkPointOverlay(overlays, lat, lng)) covered++;
     }
     results.push({ ...sl, score: Math.round(covered / NUM * 100) });
   }
@@ -677,7 +768,6 @@ calcBtn.addEventListener('click', async () => {
   scoreResults.innerHTML = html;
   scoreResults.style.display = 'block';
 
-  // Animate bars
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       scoreResults.querySelectorAll('.score-bar').forEach(b => {
@@ -686,8 +776,8 @@ calcBtn.addEventListener('click', async () => {
     });
   });
 
-  let note = `${NUM} sample points · ${scoreRadius}km radius`;
-  if (maxisNote) note += '<br>⚠ Maxis needs API proxy (coming soon)';
+  let note = `${NUM} samples · ${scoreRadius}km radius`;
+  if (maxisFailed) note += '<br>⚠ Maxis Worker proxy error';
   scoreNote.innerHTML = note;
   scoreNote.style.display = 'block';
 
