@@ -27,23 +27,17 @@
   }
   body {
     font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: var(--bg-dark);
-    color: var(--text-primary);
-    height: 100vh; height: 100dvh;
-    overflow: hidden;
+    background: var(--bg-dark); color: var(--text-primary);
+    height: 100vh; height: 100dvh; overflow: hidden;
   }
   #map { width: 100%; height: 100%; z-index: 1; }
-  .leaflet-tile-pane { filter: none; }
   .leaflet-control-attribution {
-    background: rgba(10, 10, 15, 0.8) !important;
-    color: var(--text-muted) !important;
-    font-size: 10px !important;
-    backdrop-filter: blur(8px);
+    background: rgba(10,10,15,0.8) !important; color: var(--text-muted) !important;
+    font-size: 10px !important; backdrop-filter: blur(8px);
   }
   .leaflet-control-attribution a { color: var(--text-secondary) !important; }
   .leaflet-control-zoom a {
-    background: var(--bg-panel) !important;
-    color: var(--text-primary) !important;
+    background: var(--bg-panel) !important; color: var(--text-primary) !important;
     border-color: var(--border) !important;
   }
   .leaflet-control-zoom a:hover { background: var(--bg-panel-hover) !important; }
@@ -51,10 +45,8 @@
   .header {
     position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
     display: flex; align-items: center; justify-content: space-between;
-    padding: 10px 16px;
-    background: rgba(10, 10, 15, 0.85);
-    backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--border);
+    padding: 10px 16px; background: rgba(10,10,15,0.85);
+    backdrop-filter: blur(12px); border-bottom: 1px solid var(--border);
   }
   .logo { display: flex; align-items: center; gap: 8px; }
   .logo-icon {
@@ -65,37 +57,32 @@
   }
   .logo-text { font-size: 18px; font-weight: 700; letter-spacing: -0.5px; }
   .logo-text span { color: var(--text-muted); font-weight: 400; font-size: 12px; margin-left: 6px; }
-  .header-right { display: flex; align-items: center; gap: 8px; }
   .locate-btn {
     width: 34px; height: 34px; border-radius: 8px;
     border: 1px solid var(--border); background: var(--bg-panel);
     color: var(--text-secondary); cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center; transition: all 0.2s;
   }
   .locate-btn:hover { background: var(--bg-panel-hover); color: var(--text-primary); }
   .locate-btn.active { color: var(--accent); border-color: var(--accent); box-shadow: 0 0 12px var(--accent-glow); }
 
   .panel {
-    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-    z-index: 1000;
-    background: rgba(18, 18, 26, 0.92);
-    backdrop-filter: blur(16px);
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 1000;
+    background: rgba(18,18,26,0.92); backdrop-filter: blur(16px);
     border: 1px solid var(--border); border-radius: 16px;
     padding: 12px; min-width: 340px; max-width: calc(100vw - 32px);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
   }
   .panel-section { margin-bottom: 8px; }
   .panel-section:last-child { margin-bottom: 0; }
   .panel-label {
     display: flex; align-items: center; gap: 6px;
     font-size: 10px; font-weight: 600; text-transform: uppercase;
-    letter-spacing: 1.2px; color: var(--text-muted);
-    margin-bottom: 8px; padding: 0 4px;
+    letter-spacing: 1.2px; color: var(--text-muted); margin-bottom: 8px; padding: 0 4px;
   }
   .layer-toggles { display: flex; gap: 6px; }
   .layer-btn {
-    flex: 1; position: relative; padding: 10px 12px; border-radius: 10px;
+    flex: 1; padding: 10px 12px; border-radius: 10px;
     border: 1.5px solid var(--border); background: transparent;
     color: var(--text-secondary); font-family: inherit;
     font-size: 13px; font-weight: 600; cursor: pointer;
@@ -121,7 +108,7 @@
   }
 
   .opacity-row { display: flex; align-items: center; gap: 10px; padding: 6px 4px 2px; }
-  .opacity-label { font-size: 11px; color: var(--text-muted); white-space: nowrap; min-width: 52px; }
+  .opacity-label { font-size: 11px; color: var(--text-muted); min-width: 52px; }
   .opacity-slider {
     flex: 1; -webkit-appearance: none; appearance: none;
     height: 4px; border-radius: 2px; background: var(--border); outline: none;
@@ -210,8 +197,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
 // ============================================
-// allg v1.2 — Malaysia Telco Coverage Map
-// Maxis (tiles) + CelcomDigi (local GeoJSON)
+// allg v1.3 — Malaysia Telco Coverage Map
+// Maxis: tile layers
+// CelcomDigi: image overlay layers (from KMZ)
 // ============================================
 
 const MAXIS_BASE = 'https://maxisnetwork.tuxgeo.com/gwc/service/gmaps';
@@ -223,14 +211,14 @@ const TELCO_LAYERS = {
     '5g': { type: 'tile', url: `${MAXIS_BASE}?SRS=EPSG:900913&layers=maxis:coverage_5g&zoom={z}&x={x}&y={y}&format=image/png8`, label: 'Maxis 5G', color: '#ed138b' }
   },
   celcomdigi: {
-    'celcom_4g': { type: 'geojson', url: 'data/celcom_4g.geojson', label: 'Celcom 4G', color: '#66A2EA' },
-    'digi_4g':   { type: 'geojson', url: 'data/digi_4g.geojson',   label: 'Digi 4G',   color: '#66A2EA' },
-    '5g':        { type: 'geojson', url: 'data/dnb_5g.geojson',    label: '5G (DNB)',   color: '#FFE000' }
+    'celcom_4g': { type: 'overlay', url: 'data/celcom_4g.json', label: 'Celcom 4G', color: '#66A2EA' },
+    'digi_4g':   { type: 'overlay', url: 'data/digi_4g.json',   label: 'Digi 4G',   color: '#66A2EA' },
+    '5g':        { type: 'overlay', url: 'data/dnb_5g.json',    label: '5G (DNB)',   color: '#FFE000' }
   }
 };
 
 // --- Map ---
-const map = L.map('map', { center: [4.2105, 101.9758], zoom: 7, zoomControl: true, attributionControl: true });
+const map = L.map('map', { center: [4.2105, 101.9758], zoom: 7 });
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
   attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
   subdomains: 'abcd', maxZoom: 19
@@ -238,10 +226,20 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
 
 // --- State ---
 const activeLayers = {};
-const geojsonCache = {};
+const dataCache = {};
 let currentOpacity = 0.7;
 
-function layerKey(telco, gen) { return `${telco}-${gen}`; }
+function layerKey(t, g) { return `${t}-${g}`; }
+
+// --- Create image overlay layer group ---
+function createOverlayGroup(data, opacity) {
+  const group = L.layerGroup();
+  data.overlays.forEach(o => {
+    const imgOverlay = L.imageOverlay(o.image, o.bounds, { opacity: opacity });
+    group.addLayer(imgOverlay);
+  });
+  return group;
+}
 
 // --- Toggle ---
 async function toggleLayer(telco, gen, btn) {
@@ -249,14 +247,13 @@ async function toggleLayer(telco, gen, btn) {
   const config = TELCO_LAYERS[telco]?.[gen];
   if (!config) return false;
 
-  // Remove if active
   if (activeLayers[key]) {
     map.removeLayer(activeLayers[key]);
     delete activeLayers[key];
     return false;
   }
 
-  // Tile layer (Maxis)
+  // Tile (Maxis)
   if (config.type === 'tile') {
     const layer = L.tileLayer(config.url, { opacity: currentOpacity, maxZoom: 18, minZoom: 1 });
     layer.addTo(map);
@@ -264,27 +261,19 @@ async function toggleLayer(telco, gen, btn) {
     return true;
   }
 
-  // GeoJSON layer (CelcomDigi)
-  if (config.type === 'geojson') {
+  // Image overlay (CelcomDigi)
+  if (config.type === 'overlay') {
     if (btn) btn.classList.add('loading');
     try {
-      // Cache check
-      if (!geojsonCache[config.url]) {
+      if (!dataCache[config.url]) {
         const resp = await fetch(config.url);
-        if (!resp.ok) throw new Error(`HTTP ${resp.status} — Make sure ${config.url} exists`);
-        geojsonCache[config.url] = await resp.json();
+        if (!resp.ok) throw new Error(`HTTP ${resp.status} — file not found. Run the KMZ extractor first.`);
+        dataCache[config.url] = await resp.json();
       }
-      const layer = L.geoJSON(geojsonCache[config.url], {
-        style: {
-          color: config.color,
-          fillColor: config.color,
-          fillOpacity: currentOpacity * 0.6,
-          weight: 0,
-          opacity: currentOpacity
-        }
-      });
-      layer.addTo(map);
-      activeLayers[key] = layer;
+      const group = createOverlayGroup(dataCache[config.url], currentOpacity);
+      group.addTo(map);
+      activeLayers[key] = group;
+      console.log(`Loaded ${config.label}: ${dataCache[config.url].overlays.length} overlays`);
       return true;
     } catch (err) {
       console.error(`Failed to load ${config.label}:`, err);
@@ -313,8 +302,13 @@ opacitySlider.addEventListener('input', (e) => {
   currentOpacity = parseInt(e.target.value) / 100;
   opacityVal.textContent = `${e.target.value}%`;
   Object.values(activeLayers).forEach(layer => {
-    if (layer.setOpacity) layer.setOpacity(currentOpacity);
-    else if (layer.setStyle) layer.setStyle({ fillOpacity: currentOpacity * 0.6, opacity: currentOpacity });
+    if (layer.setOpacity) {
+      // Tile layer
+      layer.setOpacity(currentOpacity);
+    } else if (layer.eachLayer) {
+      // Layer group (image overlays)
+      layer.eachLayer(l => { if (l.setOpacity) l.setOpacity(currentOpacity); });
+    }
   });
 });
 
